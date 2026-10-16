@@ -20,7 +20,8 @@ import {
   ChevronDown,
   Layers,
   Sparkles,
-  Award
+  Award,
+  Bell
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -35,6 +36,9 @@ interface HeaderProps {
   activeTab: string;
   onChangeTab: (tab: string) => void;
   onQuickChangeDesignation: (newDesignation: DesignationType) => void;
+  onOpenAssistant: () => void;
+  onOpenNotifications?: () => void;
+  pendingNotificationCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -49,6 +53,9 @@ export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onChangeTab,
   onQuickChangeDesignation,
+  onOpenAssistant,
+  onOpenNotifications,
+  pendingNotificationCount = 0,
 }) => {
   const [showBrandMenu, setShowBrandMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -160,8 +167,11 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-base sm:text-lg font-extrabold tracking-tight text-white group-hover:text-blue-400 transition">
-                    AutoCRM Pro
+                  <span className="text-base sm:text-lg font-black tracking-tight text-white group-hover:text-blue-400 transition flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded-lg bg-blue-600 text-white font-black text-xs tracking-wider shadow-sm">
+                      DAR
+                    </span>
+                    <span className="hidden sm:inline">AutoCRM</span>
                   </span>
                   <span 
                     className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider text-white"
@@ -170,7 +180,7 @@ export const Header: React.FC<HeaderProps> = ({
                     {config.brand}
                   </span>
                 </div>
-                <span className="text-[11px] text-slate-400 truncate max-w-[200px] sm:max-w-[280px]">
+                <span className="text-[11px] text-slate-400 truncate max-w-[160px] sm:max-w-[280px]">
                   {config.showroomName}
                 </span>
               </div>
@@ -180,7 +190,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative">
               <button
                 onClick={() => setShowBrandMenu(!showBrandMenu)}
-                className="hidden md:flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                className="hidden md:flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer"
               >
                 <span>Change Brand</span>
                 <ChevronDown className="w-3 h-3 text-slate-400" />
@@ -221,6 +231,16 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right Action Bar */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* AI Copilot Button */}
+            <button
+              onClick={onOpenAssistant}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600/30 to-purple-600/30 hover:from-blue-600/50 hover:to-purple-600/50 border border-blue-500/40 text-blue-200 text-xs font-semibold shadow-sm transition active:scale-95 cursor-pointer"
+              title="Open Gemini AI Dealership Assistant"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+              <span className="hidden sm:inline">AI Copilot</span>
+              <span className="sm:hidden">AI</span>
+            </button>
             {/* Quick Attendance Punch Button */}
             <button
               onClick={onOpenQuickPunchIn}
@@ -239,6 +259,22 @@ export const Header: React.FC<HeaderProps> = ({
                 {isPunchedInToday ? 'Punched' : 'Punch'}
               </span>
             </button>
+
+            {/* Push Notifications & DAR Alerts Manager Button */}
+            {onOpenNotifications && (
+              <button
+                onClick={onOpenNotifications}
+                className="relative p-2 rounded-xl bg-slate-800/80 hover:bg-slate-750 text-slate-300 hover:text-white border border-slate-700/80 transition active:scale-95 cursor-pointer"
+                title="Push Notifications & DAR Approval Alerts"
+              >
+                <Bell className="w-4 h-4 text-slate-300" />
+                {pendingNotificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-white text-[9px] font-black flex items-center justify-center animate-pulse">
+                    {pendingNotificationCount > 9 ? '9+' : pendingNotificationCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* PWA Install Button */}
             <PWAInstallButton />

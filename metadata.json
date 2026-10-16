@@ -1,6 +1,10 @@
 {
   "name": "AutoCRM Pro - Automobile Showroom DAR & Activity Management",
   "description": "Enterprise Automobile Dealership CRM for Daily Work Reports (DAR), Hourly Activity tracking, Employee Attendance, Salary Slips, EDP, Accounts, Reception, Sales, Service, and TV Wallboard display.",
-  "requestFramePermissions": ["geolocation"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

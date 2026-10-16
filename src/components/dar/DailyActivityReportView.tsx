@@ -21,9 +21,11 @@ import {
   X,
   User,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { useToast } from '../../context/ToastContext';
 
 interface DailyActivityReportViewProps {
   darReports: DARReport[];
@@ -44,6 +46,8 @@ export const DailyActivityReportView: React.FC<DailyActivityReportViewProps> = (
   isModalOpenByDefault = false,
   onCloseModalByDefault,
 }) => {
+  const { showToast } = useToast();
+  const [formValidationError, setFormValidationError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(isModalOpenByDefault);
   const [selectedReport, setSelectedReport] = useState<DARReport | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,8 +101,17 @@ export const DailyActivityReportView: React.FC<DailyActivityReportViewProps> = (
 
   const handleSubmitForm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.morningPlan || !formData.tasksCompleted) {
-      alert('Please fill in both the Morning Plan and Completed Tasks fields.');
+    setFormValidationError(null);
+
+    if (!formData.morningPlan?.trim()) {
+      setFormValidationError('Please enter your Morning Plan & Key Objectives for today.');
+      showToast('Validation Error', 'error', 'Morning Plan is required to file DAR.');
+      return;
+    }
+
+    if (!formData.tasksCompleted?.trim()) {
+      setFormValidationError('Please enter the actual tasks completed and customer engagements.');
+      showToast('Validation Error', 'error', 'Completed Tasks field is required.');
       return;
     }
 
@@ -111,22 +124,22 @@ export const DailyActivityReportView: React.FC<DailyActivityReportViewProps> = (
       department: formData.department || currentEmployee.department,
       designation: formData.designation || currentEmployee.designation,
       shiftHours: formData.shiftHours || '09:00 AM - 07:30 PM',
-      morningPlan: formData.morningPlan || '',
-      tasksCompleted: formData.tasksCompleted || '',
-      pendingTasks: formData.pendingTasks || 'None',
-      callsTarget: Number(formData.callsTarget) || 0,
-      callsActual: Number(formData.callsActual) || 0,
-      walkinTarget: Number(formData.walkinTarget) || 0,
-      walkinActual: Number(formData.walkinActual) || 0,
-      testDriveTarget: Number(formData.testDriveTarget) || 0,
-      testDriveActual: Number(formData.testDriveActual) || 0,
-      bookingTarget: Number(formData.bookingTarget) || 0,
-      bookingActual: Number(formData.bookingActual) || 0,
-      deliveryActual: Number(formData.deliveryActual) || 0,
-      serviceRevenueActual: Number(formData.serviceRevenueActual) || 0,
-      accountsCollected: Number(formData.accountsCollected) || 0,
-      customerEscalations: formData.customerEscalations || 'None',
-      edpSyncNotes: formData.edpSyncNotes || '',
+      morningPlan: formData.morningPlan.trim(),
+      tasksCompleted: formData.tasksCompleted.trim(),
+      pendingTasks: formData.pendingTasks?.trim() || 'None',
+      callsTarget: Math.max(0, Number(formData.callsTarget) || 0),
+      callsActual: Math.max(0, Number(formData.callsActual) || 0),
+      walkinTarget: Math.max(0, Number(formData.walkinTarget) || 0),
+      walkinActual: Math.max(0, Number(formData.walkinActual) || 0),
+      testDriveTarget: Math.max(0, Number(formData.testDriveTarget) || 0),
+      testDriveActual: Math.max(0, Number(formData.testDriveActual) || 0),
+      bookingTarget: Math.max(0, Number(formData.bookingTarget) || 0),
+      bookingActual: Math.max(0, Number(formData.bookingActual) || 0),
+      deliveryActual: Math.max(0, Number(formData.deliveryActual) || 0),
+      serviceRevenueActual: Math.max(0, Number(formData.serviceRevenueActual) || 0),
+      accountsCollected: Math.max(0, Number(formData.accountsCollected) || 0),
+      customerEscalations: formData.customerEscalations?.trim() || 'None',
+      edpSyncNotes: formData.edpSyncNotes?.trim() || '',
       gmRemarks: formData.gmRemarks || '',
       status: formData.status as 'Draft' | 'Submitted' | 'Approved' | 'Needs Revision',
       submittedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -826,6 +839,45 @@ export const DailyActivityReportView: React.FC<DailyActivityReportViewProps> = (
                     General Manager Remarks
                   </span>
                   <p className="text-slate-100 text-xs mt-1 italic">&ldquo;{selectedReport.gmRemarks}&rdquo;</p>
+                </div>
+              )}
+
+              {/* GM / Manager Push Notification Approval Action */}
+              {(currentEmployee.department === 'Management' || currentEmployee.designation.includes('GM')) && selectedReport.status !== 'Approved' && (
+                <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-500/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-purple-200 uppercase tracking-wider flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-purple-400" />
+                      Approve DAR &amp; Dispatch Push Alert
+                    </span>
+                    <span className="text-[10px] text-purple-300 font-medium">
+                      Sends immediate mobile notification to {selectedReport.employeeName}
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={gmRemarksText}
+                    onChange={(e) => setGmRemarksText(e.target.value)}
+                    placeholder="Enter approval feedback (e.g., Outstanding walkin-to-booking conversion today!)..."
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onApproveDAR) {
+                          onApproveDAR(selectedReport.id, gmRemarksText.trim() || 'Approved by GM - Exceptional Daily Targets Achieved');
+                          confetti({ particleCount: 50 });
+                          setSelectedReport(null);
+                          setGmRemarksText('');
+                        }
+                      }}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center gap-1.5 transition shadow-lg shadow-emerald-600/30 cursor-pointer"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Approve &amp; Send Mobile Push Alert
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

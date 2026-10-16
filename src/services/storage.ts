@@ -900,23 +900,42 @@ export const DEFAULT_SALARY_SLIPS: SalarySlip[] = [
   },
 ];
 
-// Helper functions for safe local persistence with fallback
+// In-memory fallback if localStorage is disabled or throws QuotaExceededError
+const memoryFallbackStore = new Map<string, string>();
+
+// Helper functions for safe local persistence with fallback and error handling
 export function getStoredData<T>(key: string, defaultValue: T): T {
   try {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      const memVal = memoryFallbackStore.get(key);
+      return memVal ? JSON.parse(memVal) : defaultValue;
+    }
     const item = localStorage.getItem(key);
     if (!item) return defaultValue;
     return JSON.parse(item) as T;
   } catch (e) {
-    console.warn(`Error reading localStorage key ${key}:`, e);
+    console.warn(`Error reading localStorage key "${key}":`, e);
+    const memVal = memoryFallbackStore.get(key);
+    if (memVal) {
+      try {
+        return JSON.parse(memVal) as T;
+      } catch {
+        return defaultValue;
+      }
+    }
     return defaultValue;
   }
 }
 
 export function setStoredData<T>(key: string, value: T): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    const serialized = JSON.stringify(value);
+    memoryFallbackStore.set(key, serialized);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(key, serialized);
+    }
   } catch (e) {
-    console.warn(`Error writing localStorage key ${key}:`, e);
+    console.warn(`Error writing to localStorage key "${key}" (Quota or permissions):`, e);
   }
 }
 

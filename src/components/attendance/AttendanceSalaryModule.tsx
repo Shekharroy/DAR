@@ -21,9 +21,16 @@ import {
   Sparkles,
   ArrowRight,
   TrendingUp,
-  Award
+  Award,
+  FileSpreadsheet
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { useToast } from '../../context/ToastContext';
+import { 
+  downloadSalarySlipPDF, 
+  printSalarySlipDirect, 
+  downloadSalarySlipCSV 
+} from '../../services/salarySlipGenerator';
 
 interface AttendanceSalaryModuleProps {
   config: ShowroomConfig;
@@ -88,6 +95,9 @@ export const AttendanceSalaryModule: React.FC<AttendanceSalaryModuleProps> = ({
     confetti({ particleCount: 40, spread: 50 });
   };
 
+  const { showToast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
+
   // Clock Out Action
   const handleClockOut = () => {
     if (!myRecordToday) return;
@@ -96,7 +106,46 @@ export const AttendanceSalaryModule: React.FC<AttendanceSalaryModuleProps> = ({
   };
 
   const handlePrintSalarySlip = () => {
-    window.print();
+    if (!currentSalarySlip) {
+      showToast('No Salary Slip', 'error', 'No salary slip record found for this period.');
+      return;
+    }
+    try {
+      showToast('Printing Salary Slip', 'info', `Opening print preview for ${currentSalarySlip.employeeName}...`);
+      printSalarySlipDirect(currentSalarySlip, config, targetEmployee);
+    } catch (e: any) {
+      showToast('Print Error', 'error', e.message);
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!currentSalarySlip) {
+      showToast('No Salary Slip', 'error', 'No salary slip record found for this period.');
+      return;
+    }
+    setIsExporting(true);
+    try {
+      const res = downloadSalarySlipPDF(currentSalarySlip, config, targetEmployee);
+      showToast('Salary Slip Downloaded', 'success', `Saved ${res.filename} to your device!`);
+      confetti({ particleCount: 40, spread: 60 });
+    } catch (e: any) {
+      showToast('Download Error', 'error', e.message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadCSV = () => {
+    if (!currentSalarySlip) {
+      showToast('No Salary Slip', 'error', 'No salary slip record found for this period.');
+      return;
+    }
+    try {
+      downloadSalarySlipCSV(currentSalarySlip, config, targetEmployee);
+      showToast('CSV Downloaded', 'success', `Exported salary ledger for ${currentSalarySlip.month}.`);
+    } catch (e: any) {
+      showToast('Export Error', 'error', e.message);
+    }
   };
 
   return (
@@ -326,18 +375,44 @@ export const AttendanceSalaryModule: React.FC<AttendanceSalaryModuleProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={handlePrintSalarySlip}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/30 transition active:scale-95 cursor-pointer"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Print / Download Salary Slip</span>
-            </button>
+            {/* Action Buttons: Download PDF, Print, and CSV */}
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={handleDownloadPDF}
+                disabled={isExporting}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs font-bold text-white shadow-lg shadow-emerald-600/25 transition active:scale-95 cursor-pointer disabled:opacity-50"
+                title="Download Official PDF Salary Slip to Device"
+              >
+                <Download className="w-4 h-4" />
+                <span>{isExporting ? 'Generating PDF...' : 'Download PDF Slip'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrintSalarySlip}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-xs font-bold text-white shadow-lg shadow-blue-600/25 transition active:scale-95 cursor-pointer"
+                title="Print Official Salary Slip (A4 / Letter)"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Slip</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadCSV}
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
+                title="Export Payroll Breakdown to CSV Spreadsheet"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                <span className="hidden md:inline">CSV</span>
+              </button>
+            </div>
           </div>
 
           {/* OFFICIAL SALARY SLIP VIEW (PRINTABLE FORMAT) */}
           {currentSalarySlip && (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl text-slate-100 print-break-inside-avoid">
+            <div id="salary-slip-printable" className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl text-slate-100 print-break-inside-avoid relative overflow-hidden">
               {/* Slip Header */}
               <div className="border-b-2 border-slate-800 pb-5 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>

@@ -3,22 +3,35 @@
 @layer base {
   * {
     border-color: rgba(255, 255, 255, 0.08);
+    -webkit-tap-highlight-color: transparent;
   }
   
-  body {
-    background-color: #030712;
+  html, body {
+    background-color: #020617;
     color: #f1f5f9;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Native mobile app behavior */
+    overscroll-behavior-y: none;
+    touch-action: manipulation;
+    -webkit-overflow-scrolling: touch;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Allow text selection inside inputs, textareas, and content tables */
+  input, textarea, table, [contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
   }
 }
 
 /* Custom sleek scrollbar for dealership tables and timeline */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.4);
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(100, 116, 139, 0.4);
@@ -28,13 +41,30 @@
   background: rgba(148, 163, 184, 0.7);
 }
 
+/* Safe area padding utilities for iPhone Home Indicator and Notch */
+.pb-safe {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Native Mobile Bottom Navigation Bar */
+.mobile-nav-bar {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0.5rem));
+}
+
 /* Print styling for Daily Activity Reports (DAR) and Salary Slips */
 @media print {
-  body {
-    background-color: white !important;
-    color: black !important;
+  @page {
+    margin: 10mm;
+    size: auto;
   }
-  .no-print {
+  body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+  .no-print, header, nav, .mobile-nav-bar, button {
     display: none !important;
   }
   .print-only {
@@ -42,5 +72,29 @@
   }
   .print-break-inside-avoid {
     break-inside: avoid;
+  }
+  #salary-slip-printable {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 2px solid #94a3b8 !important;
+    box-shadow: none !important;
+    padding: 20px !important;
+  }
+  #salary-slip-printable * {
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+  #salary-slip-printable .bg-slate-900,
+  #salary-slip-printable .bg-slate-950,
+  #salary-slip-printable .bg-slate-800 {
+    background-color: #f8fafc !important;
+  }
+  #salary-slip-printable .text-emerald-400,
+  #salary-slip-printable .text-emerald-300 {
+    color: #059669 !important;
+  }
+  #salary-slip-printable .text-rose-400,
+  #salary-slip-printable .text-rose-300 {
+    color: #e11d48 !important;
   }
 }

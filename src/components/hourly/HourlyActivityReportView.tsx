@@ -23,6 +23,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { useToast } from '../../context/ToastContext';
 
 interface HourlyActivityReportViewProps {
   hourlyLogs: HourlyLog[];
@@ -76,10 +77,12 @@ export const HourlyActivityReportView: React.FC<HourlyActivityReportViewProps> =
     });
   };
 
+  const { showToast } = useToast();
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!logFormData.notes) {
-      alert('Please enter a brief activity summary for this hour.');
+    if (!logFormData.notes?.trim()) {
+      showToast('Validation Error', 'error', 'Please enter a brief activity summary for this hour.');
       return;
     }
 
@@ -90,16 +93,16 @@ export const HourlyActivityReportView: React.FC<HourlyActivityReportViewProps> =
       employeeId: logFormData.employeeId || currentEmployee.id,
       employeeName: logFormData.employeeName || currentEmployee.name,
       department: (logFormData.department as DepartmentType) || currentEmployee.department,
-      callsMade: Number(logFormData.callsMade) || 0,
-      walkinsAttended: Number(logFormData.walkinsAttended) || 0,
-      testDrivesConducted: Number(logFormData.testDrivesConducted) || 0,
-      bookingsTaken: Number(logFormData.bookingsTaken) || 0,
-      deliveriesDone: Number(logFormData.deliveriesDone) || 0,
-      serviceJobCardsCreated: Number(logFormData.serviceJobCardsCreated) || 0,
-      serviceVehiclesDelivered: Number(logFormData.serviceVehiclesDelivered) || 0,
-      accountsCollectionAmount: Number(logFormData.accountsCollectionAmount) || 0,
-      edpTasksCompleted: Number(logFormData.edpTasksCompleted) || 0,
-      notes: logFormData.notes || '',
+      callsMade: Math.max(0, Number(logFormData.callsMade) || 0),
+      walkinsAttended: Math.max(0, Number(logFormData.walkinsAttended) || 0),
+      testDrivesConducted: Math.max(0, Number(logFormData.testDrivesConducted) || 0),
+      bookingsTaken: Math.max(0, Number(logFormData.bookingsTaken) || 0),
+      deliveriesDone: Math.max(0, Number(logFormData.deliveriesDone) || 0),
+      serviceJobCardsCreated: Math.max(0, Number(logFormData.serviceJobCardsCreated) || 0),
+      serviceVehiclesDelivered: Math.max(0, Number(logFormData.serviceVehiclesDelivered) || 0),
+      accountsCollectionAmount: Math.max(0, Number(logFormData.accountsCollectionAmount) || 0),
+      edpTasksCompleted: Math.max(0, Number(logFormData.edpTasksCompleted) || 0),
+      notes: logFormData.notes.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
